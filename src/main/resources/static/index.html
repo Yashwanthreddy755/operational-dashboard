@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Operational Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f4f6f8;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #222;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        .details {
+            margin-top: 10px;
+            color: #777;
+            font-size: 14px;
+        }
+
+        .status {
+            color: green;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #777;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Operational Dashboard</h1>
+
+    <p class="subtitle">
+        Real-Time System Monitoring
+    </p>
+
+    <div class="dashboard">
+
+        <!-- CPU -->
+        <div class="card">
+            <h2>🖥️ CPU Usage</h2>
+
+            <div class="value">
+                <span id="cpu">--</span>%
+            </div>
+
+            <div class="details">
+                Current CPU usage
+            </div>
+        </div>
+
+        <!-- Memory -->
+        <div class="card">
+            <h2>🧠 Memory Usage</h2>
+
+            <div class="value">
+                <span id="memory">--</span>%
+            </div>
+
+            <div class="details">
+                <span id="memoryDetails">-- / -- MB</span>
+            </div>
+        </div>
+
+        <!-- Disk -->
+        <div class="card">
+            <h2>💾 Disk Usage</h2>
+
+            <div class="value">
+                <span id="disk">--</span>%
+            </div>
+
+            <div class="details">
+                <span id="diskDetails">-- / -- GB</span>
+            </div>
+        </div>
+
+        <!-- Application -->
+        <div class="card">
+            <h2>🟢 Application Status</h2>
+
+            <div class="value status" id="status">
+                Checking...
+            </div>
+
+            <div class="details">
+                Spring Boot application
+            </div>
+        </div>
+
+        <!-- Uptime -->
+        <div class="card">
+            <h2>⏱️ Application Uptime</h2>
+
+            <div class="value" id="uptime">
+                --:--:--
+            </div>
+
+            <div class="details">
+                Time since application started
+            </div>
+        </div>
+
+    </div>
+
+    <div class="footer">
+        Last updated: <span id="lastUpdated">--</span>
+    </div>
+
+    <div class="error" id="error"></div>
+
+</div>
+
+
+<script>
+
+    function formatUptime(seconds) {
+
+        const days = Math.floor(seconds / 86400);
+
+        seconds %= 86400;
+
+        const hours = Math.floor(seconds / 3600);
+
+        seconds %= 3600;
+
+        const minutes = Math.floor(seconds / 60);
+
+        const secs = seconds % 60;
+
+        return `${days}d ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+
+    async function loadMetrics() {
+
+        try {
+
+            const response = await fetch('/api/metrics');
+
+            if (!response.ok) {
+                throw new Error('Unable to get metrics');
+            }
+
+            const data = await response.json();
+
+            document.getElementById('cpu').textContent =
+                data.cpuUsage;
+
+            document.getElementById('memory').textContent =
+                data.memoryUsage;
+
+            document.getElementById('memoryDetails').textContent =
+                `${data.memoryUsedMB} / ${data.memoryTotalMB} MB`;
+
+            document.getElementById('disk').textContent =
+                data.diskUsage;
+
+            document.getElementById('diskDetails').textContent =
+                `${data.diskUsedGB} / ${data.diskTotalGB} GB`;
+
+            document.getElementById('status').textContent =
+                data.applicationStatus;
+
+            document.getElementById('uptime').textContent =
+                formatUptime(data.uptimeSeconds);
+
+            document.getElementById('lastUpdated').textContent =
+                new Date().toLocaleTimeString();
+
+            document.getElementById('error').textContent = '';
+
+        } catch (error) {
+
+            document.getElementById('error').textContent =
+                'Unable to connect to backend';
+
+        }
+    }
+
+
+    // Load immediately
+    loadMetrics();
+
+    // Refresh every 5 seconds
+    setInterval(loadMetrics, 5000);
+
+</script>
+
+</body>
+</html>
